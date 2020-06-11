@@ -333,4 +333,197 @@
         * 위 예시는 현재 위치에서만 빈 파일만을 검색한다.
 
 * (2) 파일 내의 특정 토큰 탐색 --> grep
+  * grep : 파일 전체에서 정규 표현식과 일치하는 패턴을 찾아낸다.
+    * 정규 표현식: Regular Expession, Regex라 하며, 특정 규칙을 가진 문자열의   
+      집합을 표현하는데 사용하는 형식 언어
+    * 사용법 : grep [option, ...] regex [filename, ...]
+    * -c 옵션 : 일치하는 행의 개수 출력
+    * -n 옵션 : 패턴이 일치하는 행의 번호를 함께 출력
+    * -i 옵션 : 패턴 검색 시 대소문자 구분하지 않음
+    * -l 옵션 : 검색된 패턴의 파일명 출력
+    * -L 옵션 : 패턴이 포함되지 않은 파일명 출력
+    * -r 옵션 : 하위 디렉토리의 파일들까지 패턴 검색 수행
+    * -w 옵션 : 행 전체가 패턴과 일치하는 것만 검색
+
+  * 정규표현식(Regex) 
+    * 리터럴 문자 : 일반적인 문자(a, b, 1, 2 ...)
+    * 메타 문자 : 정규표현식에서 다른 의미로 해석되는 문자
+      * 메타 문자인데 리터럴로 해석되길 바라면 앞에 \를 붙여준다.
+    
+    <table>
+        <tr>    
+            <td> . </td>
+            <td>임의의 1개 문자(1개 이상 사용 가능)</td>
+        </tr>
+        <tr>    
+            <td> ^패턴 </td>
+            <td>특정 패턴으로 시작되는 것</td>
+        </tr>
+        <tr>    
+            <td> 패턴$ </td>
+            <td>특정 패턴으로 끝나는 것</td>
+        </tr>
+        <tr>    
+            <td>[] : 문자 클래스</td>
+            <td>문자 집합 중 특정 문자와 일치하는 것</td>
+        </tr>
+        <tr>    
+            <td> * </td>
+            <td>* 앞의 문자가 0개 이상의 반복되는 것</td>
+        </tr>
+    </table>
+    
+    * 위의 . ^ * [] 를 기본 정규 표현식(Base Regex, BRE)라 한다.
+    
+    * [](문자 클래스) 사용 시 되도록이면 POSIX 문자 클래스를 사용해야한다.
+    * ex) grep '^zip$' sample.txt : zip으로 시작하고 끝나는 것 검색
+    * ex) grep '^$' : 아무런 문자가 없는 공백 라인 검색
+    * ex) grep '^[A-Z]' sample.txt와 grep '^[[:upper:]]' sample.txt는   
+      같은 결과를 나타낸다.
+    
+    * 해당 문자클래스 이외의 집합을 표현하려면 여집합 기호인 ^를 사용한다.
+      * ex) grep '^[^[:lower:]]' sample.txt
+      * 소문자로 시작하지 않는 것들을 검색한다.
+
+    * 복수의 집합에 대해서도 문자클래스로 처리할 수 있다.
+      * ex) grep '^[A-Z0-9a-z]' sample.txt
+      * 위 예시는 다음과 동일하다. grep '^[[:alnum:]]' sample.txt
+
+    * ex) echo "hell www world" | grep 'w*'
+
+  * BRE의 한계를 극복하기 위해 확장 정규 표현식(Extended Regex, ERE)이 등장했다.
+  * ERE에는 () {} + ? | 가 있다.
+  * ERE를 사용하려면 grep에 __-E 옵션__ 을 추가해야 하거나, __egrep__ 명령어를 사용해야 한다.
+
+  <table>
+    <tr>    
+        <td> | </td>
+        <td>alternation(대안)로, OR의 개념과 동일</td>
+    </tr>
+    <tr>    
+        <td> () </td>
+        <td>특정 패턴 검색을 위해 다른 regex요소들을 결합할 때 사용</td>
+    </tr>
+    <tr>    
+        <td> ? </td>
+        <td>?앞의 문자가 있거나 없는 경우의 패턴 검색 시 사용</td>
+    </tr>
+    <tr>    
+        <td> {N} </td>
+        <td>앞의 문자가 N번 반복하는 것 검색(아래에 자세히 설명)</td>
+    </tr>
+    <tr>    
+        <td> {min,} </td>
+        <td>{min,} : 앞의 문자가 최소 min번 이상 반복하는 것 검색</td>
+    </tr>
+    <tr>    
+        <td>{min, max}</td>
+        <td>앞의 문자가 최소 min번 이상 최대 max번 이하 반복하는 것 검색</td>
+    </tr>
+    <tr>    
+        <td> + </td>
+        <td>+앞의 문자가 1번 이상 반복하는 것 검색</td>
+    </tr>
+  </table>
+
+    * ex) grep -E 'bz|gz|zip' sample.txt
+    * ex) egrep 'bz|gz|zip' sample.txt
+
+    * ex) egrep '^bz|^gz|^zip)' sample.txt
+    * ex) egrep '^(bz|gz|zip)' sample.txt
+
+    * ex) echo 'http://x.com https://x.com www.x.com | egrep 'http|https'
+    * ex) echo 'http://x.com https://x.com www.x.com | egrep 'https?'
+    * 위 예시는 https 또는 http를 검색한다. (s가 있거나 없는 경우 검색)
+
+    * ex) echo 'ab aab aaab' | egrep 'a+b'
+
+    * ex) echo "www.x.com" | grep "w{3}"
+    * 위는 w가 3번 반복되는 것을 찾는다.
+
+    * ex) echo "www.x.com http://www.x.com https://www.x.com' | egrep 'https{0,}'
+<hr/>
+
+<h2>파일의 관리</h2>
+
+* (1) 파일의 보관
+  * 파일 작업을 하다보면, 다수의 파일을 하나의 파일로 묶어야 하는 경우가 생긴다.
+  * 이처럼 다수의 파일을 하나의 파일로 묶는 것을 __Archiving__ 이라 한다.
+  * Archiving은 보통 backup을 하기 위해 사용한다.
+  * Linux, Unix는 Archiving을 위해 tar 명령어를 제공한다.
+
+  * tar(Tape Archive)
+    * 사용법 : tar mode [option] [targetRoute]
+    * mode의 종류
+    <table>
+        <tr>    
+            <td>c</td>
+            <td>Archive 생성</td>
+        </tr>
+        <tr>    
+            <td>x</td>
+            <td>Archive 해제</td>
+        </tr>
+        <tr>    
+            <td>r</td>
+            <td>Archive에 추가</td>
+        </tr>
+        <tr>    
+            <td>t</td>
+            <td>Archive 내용 보기</td>
+        </tr>
+    </table> 
+
+    * option의 종류
+    <table>
+        <tr>    
+            <td>f 파일명</td>
+            <td>Archive의 이름 설정</td>
+        </tr>
+        <tr>    
+            <td>v</td>
+            <td>작업 내용 상세 출력</td>
+        </tr>
+        <tr>
+            <td>z</td>
+            <td>tar로 묶은 후 gzip으로 압축</td>
+        </tr>
+    </table>
+
+    * 주의 : 반드시 모드는 옵션보다 먼저 사용해야 한다.
+
+    * 관례적으로 가독성을 위해 archive파일은 *.tar 형태로 저장한다.
+    * 또한, z 옵션 사용시에는 *.tar.gz로 저장한다. (또는 *.tgz)
+      
+      * ex) 현재 directory내의 모든 파일을 묶어 test.tar로 만들기
+        * tar cvf test.tar * 
+
+      * ex) archive 파일의 내용 확인
+        * tar tf test.tar
+
+      * ex) archive 파일의 해제
+        * tar xvf test.tar
+    
+      * ex) z 옵션의 사용
+        * tar cvzf test.tar.gz *.txt  --> 압축
+        * tar xvzf test.tar.gz --> 해제
+
+* (2) 파일의 압축
+  * gzip, bzip2 : Linux에서 제공하는 무손실 압축 프로그램 또는 명령어
+
+  * gzip(GNU Zip) : Unix에서 쓰이던 압축 프로그램을 대체하기 위해   
+        구현된 오픈 소스 프로그램
+    * 단점 : 다수의 파일을 하나로 압축하는 기능이 없다.
   
+    * 사용법(압축하기) : gzip fileName
+    * 관례적으로 가독성을 위해 gzip으로 압축된 파일은 *.gz 형태로 저장된다.
+    * 주의 : 압축 성공 시, 원본 파일은 지워진다.
+  
+    * 사용법(압축풀기) : gunzip fileName 또는 gzip -d *.gz
+    * 마찬가지로 압축 해제 시, 압축되어 있던 *.gz 파일은 사라진다.
+  
+    * 팁 : gzip은 pipeline을 지원하므로 pipeline과 redirection을 사용해   
+        다음 두 단계를 한번에 묶을 수 있다.
+      * 1. ls -R / > list.txt
+      * 2. gzip list.txt
+      * 위를 한번에 하려면 __ls -R / gzip > list.txt.gz
