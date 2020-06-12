@@ -383,7 +383,7 @@ Shell
         Linux System에서 이를 감지하고 탐색을 중지시킨다.
 <hr/>
 
-<h2>텍스트 파일 편집기</h2>
+<h2>nano 텍스트 파일 편집기</h2>
 
 * vim, emacs, gedit, nano 등 다양한 종류가 있다.
 
