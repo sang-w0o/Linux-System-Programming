@@ -524,6 +524,6 @@
   
     * 팁 : gzip은 pipeline을 지원하므로 pipeline과 redirection을 사용해   
         다음 두 단계를 한번에 묶을 수 있다.
-      * 1. ls -R / > list.txt
-      * 2. gzip list.txt
-      * 위를 한번에 하려면 __ls -R / gzip > list.txt.gz
+      * (1) ls -R / > list.txt
+      * (2) gzip list.txt
+      * 위를 한번에 하려면 __ls -R / gzip > list.txt.gz__
