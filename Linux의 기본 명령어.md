@@ -64,7 +64,7 @@ Shell
       * __>__ : 새로운 파일을 기존 파일의 내용으로 생성 후 저장
         * 사용법 : cat [originFile] > [newFile]
       * __>>__ : 내용 추가
-        * 사용법 : cat [fileToAdd] > [resultFile]
+        * 사용법 : cat [fileToAdd] >> [resultFile]
         * ex) a에 1,2,3,4,5가 있고, e에 10,11,12가 있다고 하자.
         * cat a >> e를 하면 e가 10,11,12,1,2,3,4,5가 된다.
       * __>__ : 파일 병합
