@@ -279,24 +279,16 @@ int showFileContent(FILE *fp) {
 	return 0;
 }
 ```
+<hr/>
 
+<h2>Syscall</h2>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* Process는 user space와 kernel space로 나뉜다.
+* kernel space는 모든 프로세스가 공유할 수 있는 영역인데, 이 영역에 키보드가 있다.
+* 만약 키보드의 주소를 user space에 주게 된다면, 키보드의 주소를 따라가서 kernel space에 접근할 수 있는 위험이 존재한다.
+* 따라서 암묵적인 약속을 정했는데 다음과 같다.
+  * 만약 키보드가 필요하다면, kernel space는 user space에 0을 넘겨주고, user space로부터   
+    0이 오면 kernel space는 이를 키보드라고 인지한다.
+  * 모니터의 경우 같은 원리로 다른 번호를 사용하면 된다.
+* 이렇게 된다면 user space입장에서는 정수형 상수값만 받을 뿐이다.
+* 이러한 상수값을 __file descriptor__ 라 한다.
