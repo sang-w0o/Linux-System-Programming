@@ -292,3 +292,177 @@ int showFileContent(FILE *fp) {
   * 모니터의 경우 같은 원리로 다른 번호를 사용하면 된다.
 * 이렇게 된다면 user space입장에서는 정수형 상수값만 받을 뿐이다.
 * 이러한 상수값을 __file descriptor__ 라 한다.
+
+* 버퍼 생성시에는 효율적인 버퍼의 크기가 정의된 매크로인 __BUFSIZ__ 를 사용하자.(File : stdio.h)
+<hr/>
+
+<h2>File Descriptor 정수 값의 의미</h2>
+
+* 만약 프로그램에서 open syscall함수를 통해 파일을 열면, 반환되는 file descriptor값은 __3__ 이다.
+
+* Linux내에는 PCB(Process Control Block)라는 정보 구조체가 있는데, 여기에는 각각의 파일을   
+  가리키는 정보를 저장하는 배열이 있다.
+  * 0 : Keyboard (Buffer 있음)
+  * 1 : Monitor (Buffer 있음)
+  * 2 : Monitor (Buffer 없음)
+  * 그 이후부터는 fd_table(File Descriptor Table)에서   
+    비어있는 가장 작은 index순으로 반환된다.
+
+```C
+int main(int argc, char **argv) {
+
+    int fd1 = open(argv[0], O_RDONLY);
+    printf("fd1 : %d\n", fd1);
+    // fd1 : 3
+
+    int fd2 = open(arfv[0], O_RDONLY);
+    printf("fd2 : %d\n", fd2);
+    // fd2 : 4
+
+    close(fd2);
+    close(fd1);
+}
+```
+
+<h2>File Offset</h2>
+
+* 리눅스 커널은 열려있는 파일마다 각각의 file offset을 기록한다.
+* file offset은 파일에서 다음 읽기 또는 쓰기가 시작될 위치를 의미한다.   
+  또는 파일의 시작에서부터 떨어진 거리를 의미하기도 한다.
+* 파일의 첫 Byte는 offset이 0이다.
+
+* file offset은 파일이 열렸을 때, 파일의 시작을 가리키도록 설정되어 있고,   
+  read나 write가 호출될 때 마다 방금 읽거나 쓴 byte의 다음 byte를 가리키도록 자동으로 조정된다.
+
+* 위를 알기 위해 C 표준에서는 __fseek__ 을 사용하지만, syscall 에는 __lseek__ 함수가 있다.
+
+* 프로세스 내에서 동일한 파일을 열었을 때에는 파일 정보 구조체는 각각 가지게 된다. 즉, __파일을 열 때 마다 파일 정보 구조체는 개별적으로 생성된다__.
+* 하지만 프로세스 내에서 __dup()로 해당 file descriptor__ 를 복제한 경우에는 __정보 구조체를 공유한다__.
+
+<h2>연결 계수, inode의 n_link</h2>
+
+* file 생성 시의 inode 연결 계수는 1이다.
+* dir 생성 시의 inode 연결 계수는 2이다.
+  * 그 이유는 __..__ 과 __.__ 이 있기 때문이다.
+<hr/>
+
+<h2>파일의 삭제</h2>
+
+* 파일 삭제 시에는 __unlink__ 라는 함수를 사용한다.
+* unlink함수는 인자로 전달된 파일의 연결 계수를 1 감소시킨다.
+* unlink를 수행한다고 해서 파일이 바로 삭제되는 것이 아니라, 프로세스 내에서   
+  파일을 참조하는 __참조 계수__ 와 파일 시스템에서 해당 파일을 참조하는   
+  __연결 계수가 모두 0일 때__ 삭제된다.
+<hr/>
+
+<h2>mmap(Memory Mapping)</h2>
+
+```C
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+typedef struct Person {
+	char name[32];
+	int age;
+}Person;
+
+int writePerson(const char *fname, Person *person) {
+	if(fname == NULL || person == NULL) {
+		fprintf(stderr, "argument is NULL.\n");
+		return -1;
+	}
+
+	int fd = open(fname, O_WRONLY | O_APPEND | O_CREAT, 0644);
+	if(fd < 0) {
+		perror("open");
+		return -1;
+	}
+
+	int nWritten = write(fd, person, sizeof(Person));
+	if(nWritten < 0) {
+		perror("write");
+		return -1;
+	}
+	close(fd);
+	return 0;
+}
+
+int dumpFile(const char *fname) {
+	if(fname == NULL) {
+		fprintf(stderr, "argument is NULL.\n");
+		return -1;
+	}
+
+	int fd = open(fname, O_RDONLY);
+	if(fd < 0) {
+		perror("open");
+		return -1;
+	}
+
+	Person buf;
+	while(1) {
+		ssize_t nRead = read(fd, &buf, sizeof(buf));
+		if(nRead < 0) {
+			perror("read");
+			return -1;
+		}
+		else if(nRead == 0) {
+			break;
+		}
+		else{
+			printf("name : %s, age : %d\n", buf.name, buf.age);
+		}
+	}
+	close(fd);
+	return 0;
+}
+
+int main(int argc, char **argv) {
+	if(argc != 2) {
+		fprintf(stderr, "usage : %s FILENAME\n", *argv);
+		return -1;
+	}
+
+	--argc, ++argv;
+
+	Person arr[] = { {"A", 11}, {"B", 22}, {"C", 33}, {"D",44} };
+
+	for(int i = 0; i < 4; i++) {
+		writePerson(*argv, &arr[i]);
+	}
+
+	dumpFile(*argv);
+
+	return 0;
+}
+
+```
+* 위 코드의 문제점은 함수(writePerson, dumpFile)이 호출될 때 마다 내부에서   
+  open, close, read 등 버퍼 입출력 함수를 항상 호출하기 때문에 성능이 떨어진다는 것이다.
+
+* 이러한 문제를 해결하기 위해 mmap(Memory Mapping) 이 등장했다.
+* mmap : 파일의 일부분을 프로세스의 가상 메모리에 저장하는 것.
+  * 즉, 파일을 곧 포인터(배열) 로써 처리할 수 있게 된다.
+  * mmap으로 파일에 대해 메모리 매핑을 수행하면, 해당 파일에 대한   
+    참조 계수가 1 증가한다. 또한 파일을 닫는다 하더라도 프로세스는   
+    여전히 매핑된 메모리에 접근할 수 있다.
+* mmap의 장점
+  * (1) 불필요한 복사가 발생하지 않는다.
+  * (2) 포인터의 조작만으로 파일 탐색이 가능하다.
+  * (3) IPC(Inter-Process Communicator)로 사용 가능하다.
+
+* mmap의 단점
+  * (1) 메모리 매핑은 페이지 단위(메모리 입출력을 위한 최소 단위)로 처리되므로   
+    작은 파일에 대하여 매핑할 경우, 메모리 낭비가 발생할 수 있다.
+  * (2) 메모리 매핑 시, 크기를 크게 잡으면 메모리 부족이 발생할 수 있다.
+    * 단, 64비트 시스템에서는 문제가 되지 않는다.
+  * (3) 메모리 매핑과 관련된 정보를 생성 및 유지하는 오버헤드가 발생할 수 있다.
+<hr/>
+
+<h2>파일의 정보 추출</h2>
+
+* lstat 함수 : 파일의 정보 추출해주는 syscall 함수.
+<hr/>
