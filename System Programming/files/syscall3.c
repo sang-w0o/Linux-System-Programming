@@ -4,7 +4,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-// Print contenf of the file to stdout.
+// Write the content to FILENAME
+// which user input from stdin.
 
 // usage : ./a.out FILENAME
 
