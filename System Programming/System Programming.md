@@ -462,7 +462,123 @@ int main(int argc, char **argv) {
   * (3) 메모리 매핑과 관련된 정보를 생성 및 유지하는 오버헤드가 발생할 수 있다.
 <hr/>
 
-<h2>파일의 정보 추출</h2>
+<h2>시그널(Signal)</h2>
 
-* lstat 함수 : 파일의 정보 추출해주는 syscall 함수.
-<hr/>
+* 시그널 : 프로세스 사이의 동기화 또는 통신을 위해 사용되는 메커니즘
+* 시그널은 아래와 같이 전송될 수 있다.
+  * (1) 한 프로세스가 다른 프로세스에게 전송
+  * (2) 커널이 프로세스에게 전송
+  * (3) 소프트웨어 interrupt 시에 전송
+
+* 시그널의 발생
+  * (1) 인위적으로 발생 (ex. kill 명령어 또는 함수)
+  * (2) 이벤트의 발생 (ex. 알람, 프로세스의 종료)
+  * (3) 에러의 발생 (ex. 잘못된 메모리 참조)
+  * (4) 외부 상황 발생 (ex. Ctrl + C)
+
+* 시그널의 처리 방법
+  * (1) 무시
+  * (2) 보류(pending)
+  * (3) 종료
+  * (4) 처리(handling)
+
+* 만약 시그널에 대하여 아무런 처리를 하지 않으면, 기본적으로 프로세스는 종료된다.
+
+* 아래의 시그널들은 처리할 수 없고, 무조건 받으면 해당 프로세스는 종료된다.
+  * SIGKILL
+  * SIGSTOP
+
+* 시그널의 예시 - SIGALARM(14)
+  * alarm 함수에 인자로 초를 주면, 해당 초가 지나면 프로세스에게 SIGALARM이 간다.
+  
+  ```C
+  #include <stdio.h>
+  #include <unistd.h>
+  #include <signal.h>
+
+  void SIG_handler(int signo) {
+	  switch(signo) {
+		  case SIGALRM: 
+			  printf("SIGALRM!\n");
+			  alarm(1);
+			  break;
+  		  case SIGINT:
+			  printf("SIGINT!\n");
+			  break;
+	  }
+  }
+
+  int main() {
+	
+	  if(signal(SIGALRM, SIG_handler) == SIG_ERR) {
+		  perror("signal");
+		  alarm(1);
+  	  }
+
+	  if(signal(SIGINT, SIG_handler) == SIG_ERR) {
+		  perror("signal");
+		  return -1;
+	  }
+
+	  alarm(1);
+
+	  while(1);
+
+	  return 0;
+  }
+  ```
+
+* 시그널을 __무시__ 한다는 것은 핸들러 내에서 아무것도 하지 않는다는 것이 아니다.
+* 핸들러가 일단 호출되었다는 것은 처리를 한것이나 다름없다.
+* 시그널을 무시하려면 __SIG_IGN__ 을 사용해야 한다.
+```C
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+
+void sigHandler(int signo) {}
+
+int main() {
+	if(signal(SIGINT, SIG_IGN) == SIG_ERR) {
+		perror("signal");
+		return -1;
+	}
+
+	while(1)
+		;
+	return 0;
+}
+```
+
+* 시그널의 __복원(해제)__ : __SIG_DFL__ 사용
+```c
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+
+void sigHandler(int signo) {
+	printf("SIGINT!\n");
+
+	if(signal(SIGINT, SIG_DFL) == SIG_ERR) {
+		perror("signal");
+}
+
+int main() {
+	if(signal(SIGINT, SIG_IGN) == SIG_ERR) {
+		perror("signal");
+		return -1;
+	}
+
+	while(1)
+		;
+	return 0;
+}
+```
+
+* 시그널의 __보류(pending)__
+* 개발 시 시그널을 받아야 하지만, 처리를 특정 행위를 수행한 이후에 하고 싶다면, 이 때 사용하는 것이   
+  시그널의 보류이다.
+* 시그널을 보류할 때에는 __sigprocmask__ 함수를 사용한다.
+```c
+
+```

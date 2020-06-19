@@ -484,3 +484,114 @@ int closedir(DIR *dirp);
 * Header file : sys/types.h dirent.h
 * Return value : Upon success, closedir() returns __0__. On error, __-1__ is returned, and __errno__ is set appropriately.
 <hr/>
+
+<h2>rewinddir</h2>
+
+```C
+void rewinddir(DIR *dirp);
+```
+
+* rewinddir() function resets the position of the directory stream __dirp__ to the beginning of the directory.
+* Header file : sys/types.h dirent.h
+<hr/>
+
+<h2>alarm</h2>
+
+```C
+unsigned int alarm(unsigned int seconds);
+```
+
+* alarm() arranges for __SIGALRM__ signal to be delivered to the calling process in __seconds__ seconds.
+* Header file : unistd.h
+* Return value : alarm() returns the __number of seconds remaining until any previously sheduled alarm was due to be delivered__, or __0__ if there was no previously scheduled alarm.
+<hr/>
+
+<h2>signal</h2>
+
+```C
+typedef void (*sighandler_t)(int);
+sighandler_t signal(int signum, sighandler_t handler);
+```
+
+* signal() sets the disposition of the signal __signum__ to __handler__, which is either __SIG_IGN, SIG_DFL, or the address of a programmer-defined function__.
+* Header file : signal.h
+* Return value : signal() returns the __previous value of the signal handler__, or __SIG_ERR__ on error.   
+  In the event of an error, __errno__ is set to indicate the cause.
+<hr/>
+
+<h2>sigprocmask</h2>
+
+```C
+int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+```
+
+* sigprocmask() is used to fetch and/or change the signal mask of the calling thread. The signal mask is the set of signals whose delivery is currently blocked for the caller.
+* The behavior of the call is dependent on the value of __how__ as follows:
+
+<table>
+    <tr>
+        <td>SIG_BLOCK</td>
+        <td>The set of blocked signals is the union of the current set and set argument.</td>
+    </tr>
+    <tr>
+        <td>SIG_UNBLOCK</td>
+        <td>The signals in set are remove from the current set of blocked signals. It is permissible to attempt to unblock a signal which is not blocked.</td>
+    </tr>
+    <tr>
+        <td>SIG_SETMASK</td>
+        <td>The set of blocked signals is set to the argument set.</td>
+    </tr>
+</table>
+
+* If __oldset__ is not NULL, previous signal set will be saved in __oldset__.
+* If __set__ is NULL, it ignores __how__ and saves signal mask to __oldset__.
+* Header file : signal.h
+* Return value : sigprocmask() returns __0__ on success and __-1__ on error.   
+  In the event of an error, __errno__ is set to indicate the cause.
+<hr/>
+
+<h2>sigemptyset</h2>
+
+```C
+int sigemptyset(sigset_t *set);
+```
+
+* sigemptyset() initializes the signal set given by __set__ to empty, with all signals excluded from the set.
+* Header file : signal.h
+* Return value : 
+<hr/>
+
+<h2>sigaddset</h2>
+
+```C
+int sigaddset(sigset_t *set, int signum);
+```
+
+* sigaddset() add respectively signal __signum__ from __set__.
+* Header file : signal.h
+* Return value : sigaddset() returns __0__ on success, and __-1__ on error. On error, __errno__ is set to indicate the cause of the error.
+<hr/>
+
+<h2>sigismember</h2>
+
+```C
+int sigismember(const sigset_t *set, int signum);
+```
+
+* sigismember() tests whether __signum__ is a member of __set__.
+* Header file : signal.h
+* Return value : sigismember() returns __1__ if __signum__ is a member of __set__, __0__ if __signum__ is not a member, and __-1__ on error.   
+  On error, __errno__ is set to indicate the cause of the error.
+<hr/>
+
+<h2>sigpending</h2>
+
+```C
+int sigpending(sigset_t *set)
+```
+
+* sigpending() returns the set of signals that are pending for delivery to the calling thread.   
+  The mask of pending signals is returned in __set__.
+* Header file : signal.h
+* Return value : sigpending() returns __0__ on success and __-1__ on error. In the event of an error, __errno__ is set to indicate the cause.
+<hr/>
