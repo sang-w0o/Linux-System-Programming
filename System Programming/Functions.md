@@ -349,3 +349,138 @@ int lstat(const char *pathname, struct stat *statbuf);
 * Header file : sys/types.h sys/stat.h unistd.h
 * Return value : On success, __0__ is returned. On error, __-1__ is returned, and __errno__ is set appropriately.
 <hr/>
+
+<h2>getpwuid</h2>
+
+```C
+struct passwd *getpwuid(uid_t uid);
+```
+
+* getpwuid() returns a pointer to a structure containing the broken-out fields of the record in the password database that matches the user ID, __uid__.
+
+* The __passwd__ structure is defined in __pwd.h__ as follows:
+```C
+struct passwd {
+    char *pw_name;          //username
+    char *pw_passwd;        //user password
+    uid_t pw_uid;           // user ID
+    git_t pw_gid            // group ID
+    char *pw_gecos;         // user information
+    char *pw_dir;           // home directory
+    char *pw_shell;         // shell program
+};
+```
+
+* Header file : sys/types.h pwd.h
+* Return value : getpwuid() returns a __pointer to the passwd structure, or NULL if the matching entry is not found or an error occurs__.   
+  If an error occurs, __errno__ is set appropriately.
+<hr/>
+
+<h2>getgrgid</h2>
+
+```C
+struct group *getgrgid(git_t gid);
+```
+
+* getgrgid() function returns a pointer to a sturcture containing the broken-out fields of the record in the group database that matches the group ID __gid__.
+* The __group__ structure is defined in __grp.h__ as follows:
+```C
+struct group {
+    char *gr_name;          // group name
+    char *gr_passwd;        // group password
+    gid_t gr_gid;           // groupd ID
+    char **gr_mem;          // NULL-terminated array of pointers
+                            // to names of group members
+};
+```
+* Header file : sys/types.h grp.h
+* Return value : getgrgid() function returns a __pointer to a group structure, or NULL if the matching entry is not found or an error occurs__.   
+  If an error occurs, __errno__ is set appropriately.
+<hr/>
+
+<h2>readlink</h2>
+
+```C
+ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
+```
+
+* readlink() places the contents of the symbolic link __pathname__ in the buffer __buf__, which has size __bufsiz__.   
+  readlink() __does not append a null byte to buf__.   
+  It will silently truncate the contents (to a length of __bufsiz__ characters), in case the buffer is too small to hold all of the elements.
+* Header file : unistd.h fcntl.h unistd.h
+* Return value : On success, readlink() returns __the number of bytes placed in buf. (If the returned value equals bufsiz, then truncation may have occured).__ On error, __-1__ is returned and __errno__ is set to indicate the error.
+<hr/>
+
+<h2>chdir</h2>
+
+```C
+int chdir(const char *path);
+```
+
+* chdir() changes the current working directory of the calling process t the directory specified in __path__.
+* Header file : unistd.h
+* Return value : On success, __0__ is returned. On error, __-1__ is returned and __errno__ is set appropriately.
+<hr/>
+
+<h2>getcwd</h2>
+
+```C
+char *getcwd(char *buf, size_t size);
+```
+
+* getcwd() returns a __null-terminated string__ containing an absolute pathname that is the current working directory of the calling process.   
+  The pathname is returned as the function result and via the argument __buf__, if present.
+* getcwd() function copies an absolute pathname of the current working directory to the array pointed to by __buf__, which is of length __size__.
+* If the length of the absolute pathname of the current working directory, including the terminating nul byte, exteeds __size__ bytes, __NULL__ is returned, and __errno__ is set to __ERANGE__.
+* Header file : unistd.h
+* Return value : On success, getcwd() returns a __pointer to a string containing the pathname of the curren working directory__.   
+  On failure, it returns __NULL__, and __errno__ is set to indicate the error.
+<hr/>
+
+<h2>opendir</h2>
+
+```C
+DIR *opendir(const char *name);
+```
+
+* opendir() function opens a directory stream corresponding to the directory __name__, and returns __a pointer to the directory stream__.   
+  __The stream is positioned at the first entry in the directory__.
+* Header file : sys/types.h dirent.h
+* Return value : opendir() returns __a pointer to the directory stream__. On error, __NULL__ is returned and __errno__ is set appropriately.
+<hr/>
+
+<h2>readdir</h2>
+
+```C
+struct dirent *readdir(DIR *dirp);
+```
+
+* readdir() function returns __a pointer to a dirent strucure representing the next directory entry in the directory stream pointed by dirp__. 
+* The __dirent__ structure is defined as follows:
+```C
+struct dirent {
+    int_t d_ino;                // Inode number
+    off_t d_off;                // Not an offset; see below
+    unsigned short d_reclen;    // Length of this record
+    unsigned char d_type;       // Type of file : Not supported by all
+                                // filesystem types.
+    char d_name[256];           // Null-terminated filename
+};
+```
+  * __d_off__ is the same as would be calling __telldir()__ at the current position in the directory system.
+* Header file : dirent.h
+* Return value : On success, readdir() returns __a pointer to a dirent structure__. If the end of the directory stream is reached, __NULL__ is returned and __errno is not changed__.   
+  If an error occurs, __NULL__ is returned and __errno is set appropriately__.
+<hr/>
+
+<h2>closedir</h2>
+
+```C
+int closedir(DIR *dirp);
+```
+
+* closedir() function closes the directory stream associated with __dirp__. A successful call to closedir() __also closes the underlying file descriptor associated with dirp__.   
+  The directory stream __dirp__ is not availiable after this call.
+* Header file : sys/types.h dirent.h
+* Return value : Upon success, closedir() returns __0__. On error, __-1__ is returned, and __errno__ is set appropriately.
+<hr/>
