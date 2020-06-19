@@ -2,6 +2,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
+#include <sys/sysmacros.h>
+#include <time.h>
 
 // usage : ./a.out hello.txt
 
@@ -50,9 +54,44 @@ int main(int argc, char **argv) {
 			perm[i+1] = rwx[i % 3];
 	}
 
-
 	long nlink = sb.st_nlink;
 
-	printf("%s %ld %ud %ud %s\n", perm, nlink, sb.st_uid, sb.st_gid, *argv);
+	struct passwd *pswd = getpwuid(sb.st_uid);
+	if(pswd == NULL) {
+		perror("getpwuid");
+		return -1;
+	}
+
+	struct group *grp = getgrgid(sb.st_gid);
+	if(grp == NULL) {
+		perror("getgrgid");
+		return -1;
+	}
+	
+	printf("%s %ld %s %s ", perm, nlink, pswd->pw_name, grp->gr_name);
+	
+// 	if(((sb.st_mode & S_IFMT) == S_IFBLK) || ((sb.st_mode & S_IFMT) == S_IFCHR))
+	if(S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode))
+	//	printf("%lu %lu ", (sb.st_rdev >> 8) & 0xFF, sb.st_rdev & 0xFF);
+		printf("%u %u ", major(sb.st_rdev), minor(sb.st_rdev));
+	else
+		printf("%ld ", sb.st_size);
+	
+	char mtime[32] = {0,};
+	struct tm *t = localtime(&sb.st_mtime);
+
+	strftime(mtime, sizeof(mtime), "%b %e %R", t);
+ 	printf("%s ", mtime);
+
+	if(S_ISLNK(sb.st_mode)) { // if((sb.st_mode & S_IFMT) == S_IFLNK)
+		char symlink[256];
+		ssize_t ret = readlink(*argv, symlink, sizeof(symlink));
+		symlink[ret] = '\0';
+		printf("%s -> %s\n", *argv, symlink);
+	}
+	else {
+		printf("%s\n", *argv);
+	}
 	return 0;
 }
+
